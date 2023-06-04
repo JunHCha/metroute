@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Metroute (no auth)",
+  "name_for_model": "metroute",
+  "description_for_human": "Find out which subway station to get on and off. If you only know the departure and destination, you can know which subway to take and where to get off.",
+  "description_for_model": "Plugin that provides subway transfer information. You can know which subway to take and where to take or get off.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "http://localhost:8000/openapi.yaml"
+  },
+  "logo_url": "http://localhost:8000/metroute.png",
+  "contact_email": "quffl9612@naver.com",
+  "legal_info_url": "http://example.com/legal"
+}
