@@ -27,3 +27,23 @@ class SeoulMetroRouteClient:
             ) as resp:
                 res = await resp.json()
                 return orjson.loads(res)
+
+    async def get_dummy_metro_route(self, params: QueryParams):
+        """공공데이터 포털 장애로 인한 임시 응답 데이터"""
+        return [
+            {
+                "dept_station": "을지로3가역",
+                "dest_station": "교대역",
+                "linenum": "3",
+            },
+            {
+                "dept_station": "교대역",
+                "dest_station": "강남역",
+                "linenum": "2",
+            },
+            {
+                "dept_station": "강남역",
+                "dest_station": "양재시민의숲역",
+                "linenum": "신분당",
+            },
+        ]
