@@ -20,7 +20,7 @@ class SeoulMetroRouteClient:
         dept_time: str | None = None
         train_seq: int | None = None
 
-    async def get_route(self, params: QueryParams):
+    async def get_metro_route(self, params: QueryParams):
         async with aiohttp.ClientSession(raise_for_status=True) as session:
             async with session.get(
                 self.base_url, params=params.dict(exclude_none=True)
