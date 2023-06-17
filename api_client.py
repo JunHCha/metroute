@@ -5,7 +5,38 @@ import orjson
 from pydantic import BaseModel
 
 
-class SeoulMetroRouteClient:
+def get_api_client():
+    return DummyMetroRouteClient()
+
+
+class BaseMetroRouteClient:
+    async def get_metro_route(self, **query_params):
+        raise NotImplementedError
+
+
+class DummyMetroRouteClient(BaseMetroRouteClient):
+    async def get_dummy_metro_route(self, **query_params):
+        """공공데이터 포털 장애로 인한 임시 응답 데이터"""
+        return [
+            {
+                "dept_station": "을지로3가역",
+                "dest_station": "교대역",
+                "linenum": "3",
+            },
+            {
+                "dept_station": "교대역",
+                "dest_station": "강남역",
+                "linenum": "2",
+            },
+            {
+                "dept_station": "강남역",
+                "dest_station": "양재시민의숲역",
+                "linenum": "신분당",
+            },
+        ]
+
+
+class DataPortalMetroRouteClient:
     base_url = "http://apis.data.go.kr/B553766/smt-path/path"
 
     class QueryParams(BaseModel):
@@ -27,23 +58,3 @@ class SeoulMetroRouteClient:
             ) as resp:
                 res = await resp.json()
                 return orjson.loads(res)
-
-    async def get_dummy_metro_route(self, params: QueryParams):
-        """공공데이터 포털 장애로 인한 임시 응답 데이터"""
-        return [
-            {
-                "dept_station": "을지로3가역",
-                "dest_station": "교대역",
-                "linenum": "3",
-            },
-            {
-                "dept_station": "교대역",
-                "dest_station": "강남역",
-                "linenum": "2",
-            },
-            {
-                "dept_station": "강남역",
-                "dest_station": "양재시민의숲역",
-                "linenum": "신분당",
-            },
-        ]

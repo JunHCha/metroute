@@ -1,12 +1,12 @@
 import datetime
 
 import orjson
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from api_client import SeoulMetroRouteClient
+from api_client import BaseMetroRouteClient, get_api_client
 from station_code import station_codes
 
 app = FastAPI(title="metroute", openapi_url="/openapi.json")
@@ -48,7 +48,11 @@ class MetroRouteResponse(BaseModel):
     status_code=200,
     summary="fetch subway transfer information from departure station to destination station",
 )
-async def get_metro_route(dept_station: str, dest_station: str):
+async def get_metro_route(
+    dept_station: str,
+    dest_station: str,
+    api_client: BaseMetroRouteClient = Depends(get_api_client),
+):
     def _find_station_code(station_name: str) -> str | None:
         for station_code, station_name, line_num in station_codes:
             if station_name == station_name:
@@ -67,7 +71,7 @@ async def get_metro_route(dept_station: str, dest_station: str):
         else:
             return "SAT"
 
-    params = SeoulMetroRouteClient.QueryParams(
+    params = dict(
         serviceKey="",
         pageNo=1,
         numOfRows=1,
@@ -75,6 +79,5 @@ async def get_metro_route(dept_station: str, dest_station: str):
         dest_station_code=dest_station_code,
         week=_return_DAY_if_tody_is_not_weekend(),
     )
-    client = SeoulMetroRouteClient()
-    data = await client.get_dummy_metro_route(params=params)
+    data = await api_client.get_dummy_metro_route(params=params)
     return data
