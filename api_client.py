@@ -1,60 +1,50 @@
 from typing import Literal
 
 import aiohttp
-import orjson
 from pydantic import BaseModel
 
-
-def get_api_client():
-    return DummyMetroRouteClient()
+from config import settings
 
 
-class BaseMetroRouteClient:
-    async def get_metro_route(self, **query_params):
-        raise NotImplementedError
+class ODSayApiClient:
+    def __init__(self, api_key: str, lang: Literal["ko", "eng"] = "ko") -> None:
+        self.base_url = "https://api.odsay.com/v1/api"
+        self.api_key = api_key
+        self.lang = 0 if lang == "ko" else 1
 
+    class SearchStationQuery(BaseModel):
+        stationName: str
+        CID: int = 1000
+        output: str = "json"
+        stationClass: int = 2
+        displayCnt: int = 5
 
-class DummyMetroRouteClient(BaseMetroRouteClient):
-    async def get_dummy_metro_route(self, **query_params):
-        """공공데이터 포털 장애로 인한 임시 응답 데이터"""
-        return [
-            {
-                "dept_station": "을지로3가역",
-                "dest_station": "교대역",
-                "linenum": "3",
-            },
-            {
-                "dept_station": "교대역",
-                "dest_station": "강남역",
-                "linenum": "2",
-            },
-            {
-                "dept_station": "강남역",
-                "dest_station": "양재시민의숲역",
-                "linenum": "신분당",
-            },
-        ]
-
-
-class DataPortalMetroRouteClient:
-    base_url = "http://apis.data.go.kr/B553766/smt-path/path"
-
-    class QueryParams(BaseModel):
-        serviceKey: str
-        pageNo: int
-        numOfRows: int
-        dept_station_code: str
-        dest_station_code: str
-        week: Literal["DAY", "SAT", "SUN"]
-        search_type: Literal["FASTEST", "MINTRF"] | None = None
-        first_last: int | None = None
-        dept_time: str | None = None
-        train_seq: int | None = None
-
-    async def get_metro_route(self, params: QueryParams):
+    async def get_station_code(self, params: SearchStationQuery):
+        url = self.base_url + "/searchStation"
+        q = params.dict(exclude_none=True) | {"apiKey": self.api_key, "lang": self.lang}
         async with aiohttp.ClientSession(raise_for_status=True) as session:
-            async with session.get(
-                self.base_url, params=params.dict(exclude_none=True)
-            ) as resp:
+            async with session.get(url, params=q) as resp:
                 res = await resp.json()
-                return orjson.loads(res)
+                stations = res.get("result", {}).get("station", [])
+                return stations[0].get("stationID") if stations else None
+
+    class GetMetroRouteParams(BaseModel):
+        SID: str  # 시작역 ID
+        EID: str  # 도착역 ID
+        CID: str = "1000"  # 도시코드: default=서울
+        Sopt: Literal[1, 2] = 1
+        output: str = "json"
+
+    async def get_metro_route(self, params: GetMetroRouteParams):
+        url = self.base_url + "/subwayPath"
+        q = params.dict(exclude_none=True) | {
+            "apiKey": self.api_key,
+            "lang": self.lang,
+        }
+        async with aiohttp.ClientSession(raise_for_status=True) as session:
+            async with session.get(url, params=q) as resp:
+                res = await resp.json()
+                return res
+
+
+client = ODSayApiClient(api_key=settings.ODSAY_API_KEY, lang="ko")
