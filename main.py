@@ -1,4 +1,4 @@
-import datetime
+from typing import List
 
 import orjson
 from fastapi import FastAPI
@@ -6,8 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from api_client import SeoulMetroRouteClient
-from station_code import station_codes
+from api_client import client
 
 app = FastAPI(title="metroute", openapi_url="/openapi.json")
 app.add_middleware(
@@ -17,11 +16,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.get("/ping")
-async def ping():
-    return {"message": "pong"}
 
 
 @app.get("/logo", response_class=FileResponse)
@@ -38,43 +32,78 @@ async def plugin_manifest():
 
 
 class MetroRouteResponse(BaseModel):
-    dept_station: str
-    dest_station: str
-    linenum: str
+    class Result(BaseModel):
+        class DriveInfoSet(BaseModel):
+            class DriveInfo(BaseModel):
+                laneID: str
+                laneName: str
+                startName: str
+                stationCount: int
+                wayCode: int
+                wayName: str
+
+            driveInfo: List[DriveInfo]
+
+        globalStartName: str
+        globalEndName: str
+        globalTravelTime: int
+        globalDistance: int
+        globalStationCount: int
+        fare: int
+        cashFare: int
+        driveInfoSet: DriveInfoSet
+
+        class ExChangeInfoSet(BaseModel):
+            class ExChangeInfo(BaseModel):
+                laneName: str
+                startName: str
+                exName: str
+                exSID: int
+                fastTrain: int
+                fastDoor: int
+                exWalkTime: int
+
+            exchangeInfo: List[ExChangeInfo] | None
+
+        exChangeInfoSet: ExChangeInfoSet | None
+
+        class StationSet(BaseModel):
+            class Stations(BaseModel):
+                startID: int
+                startName: str
+                endSID: int
+                endName: str
+                travelTime: int
+
+            stations: List[Stations]
+
+        stationSet: StationSet
+
+    result: Result
 
 
 @app.get(
     "/route",
     status_code=200,
-    summary="fetch subway transfer information from departure station to destination station",
+    response_model=MetroRouteResponse,
+    description="Fetch subway transfer information from start station to end station."
+    " You should enter station name only in Korean, not adding '역'"
+    " at the end of the station name.",
 )
-async def get_metro_route(dept_station: str, dest_station: str):
-    def _find_station_code(station_name: str) -> str | None:
-        for station_code, station_name, line_num in station_codes:
-            if station_name == station_name:
-                return station_code
-        return None
+async def get_metro_route(
+    start_station: str,
+    end_station: str,
+):
+    async def _find_station_code(station_name: str) -> str | None:
+        params = client.SearchStationQuery(stationName=station_name)
+        code = await client.get_station_code(params=params)
+        return code
 
-    dept_station_code = _find_station_code(dept_station)
-    dest_station_code = _find_station_code(dest_station)
+    dept_station_code = await _find_station_code(start_station)
+    dest_station_code = await _find_station_code(end_station)
     if not (dept_station_code and dest_station_code):
         return []
 
-    def _return_DAY_if_tody_is_not_weekend():
-        today = datetime.datetime.today()
-        if today.weekday() < 5:
-            return "DAY"
-        else:
-            return "SAT"
-
-    params = SeoulMetroRouteClient.QueryParams(
-        serviceKey="",
-        pageNo=1,
-        numOfRows=1,
-        dept_station_code=dept_station_code,
-        dest_station_code=dest_station_code,
-        week=_return_DAY_if_tody_is_not_weekend(),
-    )
-    client = SeoulMetroRouteClient()
-    data = await client.get_dummy_metro_route(params=params)
+    params = client.GetMetroRouteParams(SID=dept_station_code, EID=dest_station_code)
+    data = await client.get_metro_route(params=params)
     return data

@@ -1,8 +1,9 @@
 # metroute
 
-
 Metroute is a Chat GPT plug-in that guides you through the best route of the Seoul subway.
 
-Enter the departure and arrival areas to provide optimal transfer information.
+Enter the start and end stations to get optimal transfer information and other specific data.
 
-<img width="778" alt="image" src="https://github.com/JunHCha/metroute/assets/41867381/4c36a4b1-c528-4cde-b168-d8b7f17c0f33">
+# Example
+
+<img width="600" alt="image" src="https://github.com/JunHCha/metroute/assets/41867381/71f90fc8-8503-4108-aed3-f0c5b5d23d4d">
