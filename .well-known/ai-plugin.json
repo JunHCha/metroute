@@ -1,6 +1,6 @@
 {
   "schema_version": "v1",
-  "name_for_human": "Metroute (no auth)",
+  "name_for_human": "Metroute",
   "name_for_model": "metroute",
   "description_for_human": "Find out which subway station to get on and off. you can know which subway to take and where to get off.",
   "description_for_model": "Plugin that provides subway transfer information. You can know which subway to take and where to take or get off.",
@@ -9,9 +9,9 @@
   },
   "api": {
     "type": "openapi",
-    "url": "http://localhost:3000/openapi.json"
+    "url": "https://metroute.fly.dev/openapi.json"
   },
-  "logo_url": "http://localhost:3000/logo",
+  "logo_url": "https://metroute.fly.dev/logo",
   "contact_email": "quffl9612@naver.com",
-  "legal_info_url": "http://localhost:3000/docs"
+  "legal_info_url": "https://metroute.fly.dev/privacy"
 }
