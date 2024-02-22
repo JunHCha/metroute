@@ -20,7 +20,7 @@ app.add_middleware(
 
 @app.get("/logo", response_class=FileResponse)
 async def logo():
-    filename = "/resource/logo.png"
+    filename = "./resource/logo.png"
     return filename
 
 
