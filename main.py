@@ -79,7 +79,7 @@ class MetroRouteResponse(BaseModel):
 
         stationSet: StationSet
 
-    result: Result
+    result: Result | None
 
 
 @app.get(
@@ -102,7 +102,7 @@ async def get_metro_route(
     dept_station_code = await _find_station_code(start_station)
     dest_station_code = await _find_station_code(end_station)
     if not (dept_station_code and dest_station_code):
-        return []
+        return {"result": None}
 
     params = client.GetMetroRouteParams(SID=dept_station_code, EID=dest_station_code)
     data = await client.get_metro_route(params=params)
